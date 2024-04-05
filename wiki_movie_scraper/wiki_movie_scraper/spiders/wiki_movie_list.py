@@ -37,6 +37,19 @@ class WikiMovieListSpider(scrapy.Spider):
                     new_list.append(w)
             return new_list
 
+        def pick_dates(cur_list):
+            date_format = re.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+            location_format = re.compile("[a-zA-Z ].")
+            new_list = []
+            for w in cur_list:
+                if date_format.match(w):
+                    new_list.append(w)
+                if location_format.match(w):
+                    new_list.append(w)
+
+        def currency_cleanup(cur_list):
+            pass
+
         directors = clean_up(
             response.xpath(
                 ".//th[contains(text(), 'Directed by')]/following-sibling::td//text()"
