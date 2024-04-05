@@ -22,7 +22,7 @@ class WikiMovieListSpider(scrapy.Spider):
 
     def parse(self, response):
         def clean_up(cur_list):
-            superscript = re.compile("\[[0-9]+\]")
+            superscript = re.compile("\[[0-9a-zA-Z]+\]")
             new_list = []
             for w in cur_list:
                 if (
@@ -38,18 +38,28 @@ class WikiMovieListSpider(scrapy.Spider):
             return new_list
 
         def pick_dates(cur_list):
-            date_format = re.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}")
-            location_format = re.compile("[a-zA-Z ].")
+            all_digit_date_format = re.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}")
             new_list = []
             for w in cur_list:
-                if date_format.match(w):
+                if all_digit_date_format.match(w):
                     new_list.append(w)
-                if location_format.match(w):
-                    new_list.append(w)
+            if not new_list:
+                new_list = cur_list
+            return new_list
 
         def currency_cleanup(cur_list):
-            pass
+            new_list = []
+            for w in cur_list:
+                if "$" in w:
+                    new_list.append(w)
+            if not new_list:
+                new_list = cur_list
+            return new_list
 
+        movie_title = response.xpath(".//header/h1/i/text()").extract()
+        movie_title_part_02 = response.xpath(".//header/h1/text()").extract()
+        if movie_title_part_02:
+            movie_title = movie_title + movie_title_part_02
         directors = clean_up(
             response.xpath(
                 ".//th[contains(text(), 'Directed by')]/following-sibling::td//text()"
@@ -121,6 +131,7 @@ class WikiMovieListSpider(scrapy.Spider):
                 ".//div[contains(text(), 'Release date')]/../following-sibling::td//text()"
             ).extract()
         )
+        release_dates = pick_dates(release_dates)
 
         running_time = clean_up(
             response.xpath(
@@ -145,20 +156,21 @@ class WikiMovieListSpider(scrapy.Spider):
                 ".//th[contains(text(), 'Budget')]/following-sibling::td//text()"
             ).extract()
         )
+        budget = currency_cleanup(budget)
 
         box_office = clean_up(
             response.xpath(
                 ".//th[contains(text(), 'Box office')]/following-sibling::td//text()"
             ).extract()
         )
+        box_office = currency_cleanup(box_office)
 
-        imdb_link = clean_up(
-            response.xpath(
-                ".//a[contains(text(), 'IMDb')]/preceding-sibling::a/@href"
-            ).extract()
-        )
+        imdb_link = response.xpath(
+            ".//a[contains(text(), 'IMDb')]/preceding-sibling::a/@href"
+        ).extract()
 
         yield {
+            "movie_title": movie_title,
             "directors": directors,
             "writers": writers,
             "story_by": story_by,
