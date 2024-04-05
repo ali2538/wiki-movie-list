@@ -1,5 +1,5 @@
 # A Scraper to create a list of movies on Wikipedia and their details
-### Get the list of movie titles and links
+### Getting the list of movie titles and links
 First script, ``create_titles_list.py``, loads the this [Wikipedia page](https://en.wikipedia.org/wiki/List_of_films) using Selenium and exports the movie titles and their page links to a csv file.
 
 ### Cleaning the initial list
